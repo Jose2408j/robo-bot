@@ -1,0 +1,53 @@
+import numpy as np
+import tensorflow as tf
+import random
+import matplotlib.pyplot as plt
+
+# 🔹 Gerando uma base de dados de treinamento maior
+dados_treinamento = []
+resultados_treinamento = []
+
+for _ in range(100000):  # Mais jogadas para melhor aprendizado
+    dado1, dado2 = random.randint(1, 6), random.randint(1, 6)
+    dado3, dado4 = random.randint(1, 6), random.randint(1, 6)
+    soma_player = dado1 + dado2
+    soma_banco = dado3 + dado4
+    resultado = [1, 0, 0] if soma_player > soma_banco else ([0, 1, 0] if soma_player < soma_banco else [0, 0, 1])
+    
+    dados_treinamento.append([dado1, dado2, dado3, dado4])
+    resultados_treinamento.append(resultado)
+
+# 🔹 Convertendo para arrays numpy
+X = np.array(dados_treinamento)
+y = np.array(resultados_treinamento)
+
+# 🔹 Criando uma Rede Neural Profunda
+modelo = tf.keras.Sequential([
+    tf.keras.layers.Dense(64, activation="relu", input_shape=(4,)),  # Mais neurônios para capturar padrões
+    tf.keras.layers.Dense(48, activation="relu"),
+    tf.keras.layers.Dropout(0.3),  # Redução de overfitting
+    tf.keras.layers.Dense(32, activation="relu"),
+    tf.keras.layers.Dense(16, activation="relu"),
+    tf.keras.layers.Dropout(0.2),
+    tf.keras.layers.Dense(3, activation="softmax")  # Probabilidades para Player, Banco e Empate
+])
+
+modelo.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+               loss="categorical_crossentropy", metrics=["accuracy"])
+
+# 🔹 Treinando o modelo e coletando métricas
+historico = modelo.fit(X, y, epochs=25, batch_size=128, validation_split=0.2)
+
+# 🔹 Gerando gráficos de desempenho
+plt.plot(historico.history['accuracy'], label='Treinamento')
+plt.plot(historico.history['val_accuracy'], label='Validação')
+plt.title('Precisão do Modelo Bac Bo AI')
+plt.xlabel('Épocas')
+plt.ylabel('Precisão')
+plt.legend()
+plt.show()
+
+# 🔹 Testando previsões
+nova_jogada = np.array([[4, 6, 2, 5]])  # Entrada simulada
+previsao = modelo.predict(nova_jogada)
+print(f"Probabilidade de vitória - Player: {previsao[0][0]:.2%}, Banco: {previsao[0][1]:.2%}, Empate: {previsao[0][2]:.2%}")
